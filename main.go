@@ -8,5 +8,4 @@ import (
 func main() {
 	log.Info("Starting agent...")
 	agent.Start()
-
 }
