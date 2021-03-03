@@ -29,8 +29,8 @@ func Start() {
 		if !client.MarketOpen {
 			log.Info("Market is closed")
 
-			equity := client.GetEquity().String()
-			mailer.Notify("Current equity: " + equity)
+			totalEquity, TodaysEquity := client.GetEquity()
+			mailer.Notify("Current equity: " + totalEquity + "\n" + "Today's change: " + TodaysEquity)
 
 			sleep := client.NextOpen.Sub(time.Now())
 			log.Info("Sleeping for ", sleep)
