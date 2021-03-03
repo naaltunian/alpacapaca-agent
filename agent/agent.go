@@ -25,17 +25,18 @@ func Start() {
 			mailer.Notify("Account is blocked. Trading Blocked: " + strconv.FormatBool(acct.TradingBlocked) + " Account Blocked: " + strconv.FormatBool(acct.AccountBlocked))
 		}
 
-		// Check if market is open. If closed sleep until open.
+		// Check if market is open. If closed email current equity and sleep until the market reopens.
 		if !client.MarketOpen {
 			log.Info("Market is closed")
-			// log.Info("clock ", clock.NextOpen.Sub(time.Now()))
+
+			equity := client.GetEquity().String()
+			mailer.Notify("Current equity: " + equity)
+
 			sleep := client.NextOpen.Sub(time.Now())
+			log.Info("Sleeping for ", sleep)
 			time.Sleep(sleep)
 			continue
 		}
-
-		log.Info("Account equity ", acct.Equity.Floor())
-		log.Info("Account buying power ", acct.BuyingPower)
 
 		// do trades here
 

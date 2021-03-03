@@ -5,6 +5,7 @@ import (
 
 	"github.com/alpacahq/alpaca-trade-api-go/alpaca"
 	"github.com/alpacahq/alpaca-trade-api-go/common"
+	"github.com/shopspring/decimal"
 )
 
 type Client struct {
@@ -50,4 +51,10 @@ func (c *Client) GetAccount() *alpaca.Account {
 	acct := c.Account
 
 	return acct
+}
+
+func (c *Client) GetEquity() decimal.Decimal {
+	equity := c.Account.Equity
+
+	return equity
 }
