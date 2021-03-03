@@ -1,6 +1,8 @@
 package account
 
 import (
+	"time"
+
 	"github.com/alpacahq/alpaca-trade-api-go/alpaca"
 	"github.com/alpacahq/alpaca-trade-api-go/common"
 )
@@ -8,8 +10,11 @@ import (
 type Client struct {
 	AlpacaClient *alpaca.Client
 	Account      *alpaca.Account
+	MarketOpen   bool
+	NextOpen     time.Time
 }
 
+// InitializeClient initializes the client and checks if the market is open
 func InitializeClient() (*Client, error) {
 	// paper-trading
 	alpaca.SetBaseUrl("https://paper-api.alpaca.markets")
@@ -26,7 +31,17 @@ func InitializeClient() (*Client, error) {
 		return nil, err
 	}
 
-	Client := &Client{AlpacaClient: alpacaClient, Account: acct}
+	clock, err := alpacaClient.GetClock()
+	if err != nil {
+		return nil, err
+	}
+
+	Client := &Client{
+		AlpacaClient: alpacaClient,
+		Account:      acct,
+		MarketOpen:   clock.IsOpen,
+		NextOpen:     clock.NextOpen,
+	}
 
 	return Client, nil
 }

@@ -11,18 +11,31 @@ import (
 
 func Start() {
 	for {
-		Account, err := account.InitializeClient()
+		client, err := account.InitializeClient()
 		if err != nil {
 			log.Error("Error initializing client: ", err)
 			// email notifying agent is down
 			mailer.Notify("Could not initialize client: " + err.Error())
 		}
-		act := Account.GetAccount()
-		if act.TradingBlocked || act.AccountBlocked {
+
+		acct := client.GetAccount()
+		if acct.TradingBlocked || acct.AccountBlocked {
 			log.Error("Account is blocked")
 			// email notifying agent is down.
-			mailer.Notify("Account is blocked. Trading Blocked: " + strconv.FormatBool(act.TradingBlocked) + " Account Blocked: " + strconv.FormatBool(act.AccountBlocked))
+			mailer.Notify("Account is blocked. Trading Blocked: " + strconv.FormatBool(acct.TradingBlocked) + " Account Blocked: " + strconv.FormatBool(acct.AccountBlocked))
 		}
+
+		// Check if market is open. If closed sleep until open.
+		if !client.MarketOpen {
+			log.Info("Market is closed")
+			// log.Info("clock ", clock.NextOpen.Sub(time.Now()))
+			sleep := client.NextOpen.Sub(time.Now())
+			time.Sleep(sleep)
+			continue
+		}
+
+		log.Info("Account equity ", acct.Equity.Floor())
+		log.Info("Account buying power ", acct.BuyingPower)
 
 		// do trades here
 
