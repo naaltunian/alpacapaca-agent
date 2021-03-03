@@ -46,13 +46,15 @@ func InitializeClient() (*Client, error) {
 	return Client, nil
 }
 
+// GetAccount returns the user's account details
 func (c *Client) GetAccount() *alpaca.Account {
 	acct := c.Account
 
 	return acct
 }
 
-func (c *Client) GetEquity() (string, string) {
+// GetEquityAndBalanceChange returns the user's current equity and today's balance change
+func (c *Client) GetEquityAndBalanceChange() (string, string) {
 	equity := c.Account.Equity
 	balanceChange := equity.Sub(c.Account.LastEquity)
 
