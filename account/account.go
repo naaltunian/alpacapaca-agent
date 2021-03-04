@@ -7,7 +7,7 @@ import (
 	"github.com/alpacahq/alpaca-trade-api-go/common"
 )
 
-type Client struct {
+type Profile struct {
 	AlpacaClient *alpaca.Client
 	Account      *alpaca.Account
 	MarketOpen   bool
@@ -15,7 +15,7 @@ type Client struct {
 }
 
 // InitializeClient initializes the client and checks if the market is open
-func InitializeClient() (*Client, error) {
+func InitializeClient() (*Profile, error) {
 	// paper-trading
 	alpaca.SetBaseUrl("https://paper-api.alpaca.markets")
 	// prod
@@ -36,27 +36,27 @@ func InitializeClient() (*Client, error) {
 		return nil, err
 	}
 
-	Client := &Client{
+	profile := &Profile{
 		AlpacaClient: alpacaClient,
 		Account:      acct,
 		MarketOpen:   clock.IsOpen,
 		NextOpen:     clock.NextOpen,
 	}
 
-	return Client, nil
+	return profile, nil
 }
 
 // GetAccount returns the user's account details
-func (c *Client) GetAccount() *alpaca.Account {
-	acct := c.Account
+func (p *Profile) GetAccount() *alpaca.Account {
+	acct := p.Account
 
 	return acct
 }
 
 // GetEquityAndBalanceChange returns the user's current equity and today's balance change
-func (c *Client) GetEquityAndBalanceChange() (string, string) {
-	equity := c.Account.Equity
-	balanceChange := equity.Sub(c.Account.LastEquity)
+func (p *Profile) GetEquityAndBalanceChange() (string, string) {
+	equity := p.Account.Equity
+	balanceChange := equity.Sub(p.Account.LastEquity)
 
 	return equity.String(), balanceChange.String()
 }

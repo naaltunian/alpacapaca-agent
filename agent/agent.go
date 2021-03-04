@@ -1,6 +1,7 @@
 package agent
 
 import (
+	"os"
 	"strconv"
 	"time"
 
@@ -11,30 +12,37 @@ import (
 
 func Start() {
 	for {
-		client, err := account.InitializeClient()
+		// Initialize account and get current account information/balance
+		profile, err := account.InitializeClient()
 		if err != nil {
 			log.Error("Error initializing client: ", err)
 			// email notifying agent is down
 			mailer.Notify("Could not initialize client: " + err.Error())
+
+			continue
 		}
 
-		acct := client.GetAccount()
+		// Get user's account information
+		acct := profile.GetAccount()
 		if acct.TradingBlocked || acct.AccountBlocked {
 			log.Error("Account is blocked")
 			// email notifying agent is down.
 			mailer.Notify("Account is blocked. Trading Blocked: " + strconv.FormatBool(acct.TradingBlocked) + " Account Blocked: " + strconv.FormatBool(acct.AccountBlocked))
+
+			os.Exit(0)
 		}
 
 		// Check if market is open. If closed email current equity and sleep until the market reopens.
-		if !client.MarketOpen {
+		if !profile.MarketOpen {
 			log.Info("Market is closed")
 
-			totalEquity, balanceChange := client.GetEquityAndBalanceChange()
+			totalEquity, balanceChange := profile.GetEquityAndBalanceChange()
 			mailer.Notify("Current equity: " + totalEquity + "\n" + "Today's change: " + balanceChange)
 
-			sleep := client.NextOpen.Sub(time.Now())
+			sleep := profile.NextOpen.Sub(time.Now())
 			log.Info("Sleeping for ", sleep)
 			time.Sleep(sleep)
+
 			continue
 		}
 
