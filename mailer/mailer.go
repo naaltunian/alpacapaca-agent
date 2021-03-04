@@ -1,9 +1,10 @@
 package mailer
 
 import (
-	"fmt"
 	"net/smtp"
 	"os"
+
+	log "github.com/sirupsen/logrus"
 )
 
 var (
@@ -40,8 +41,8 @@ func Notify(msg string) {
 	// Sending email.
 	err := smtp.SendMail(smtpHost+":"+smtpPort, auth, from, receivingEmail, message)
 	if err != nil {
-		fmt.Println(err)
+		log.Error("Error sending email ", err)
 		return
 	}
-	fmt.Println("Email Sent Successfully!")
+	log.Info("Email Sent Successfully!")
 }
