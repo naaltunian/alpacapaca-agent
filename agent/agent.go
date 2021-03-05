@@ -7,7 +7,7 @@ import (
 
 	"github.com/naaltunian/paca-agent/account"
 	"github.com/naaltunian/paca-agent/mailer"
-	"github.com/naaltunian/paca-agent/recovery"
+
 	log "github.com/sirupsen/logrus"
 )
 
@@ -15,7 +15,7 @@ func Start() {
 	for {
 
 		// Notifies user agent is down if a panic occurs.
-		defer recovery.Recover()
+		defer recovery()
 
 		// Initialize account and get current account information/balance
 		profile, err := account.InitializeClient()
