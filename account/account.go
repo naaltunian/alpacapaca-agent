@@ -5,6 +5,7 @@ import (
 
 	"github.com/alpacahq/alpaca-trade-api-go/alpaca"
 	"github.com/alpacahq/alpaca-trade-api-go/common"
+	"github.com/shopspring/decimal"
 )
 
 type Profile struct {
@@ -12,6 +13,7 @@ type Profile struct {
 	Account      *alpaca.Account
 	MarketOpen   bool
 	NextOpen     time.Time
+	BuyingPower  decimal.Decimal
 }
 
 // InitializeClient initializes the client and checks if the market is open
@@ -41,6 +43,7 @@ func InitializeClient() (*Profile, error) {
 		Account:      acct,
 		MarketOpen:   clock.IsOpen,
 		NextOpen:     clock.NextOpen,
+		BuyingPower:  acct.BuyingPower,
 	}
 
 	return profile, nil
