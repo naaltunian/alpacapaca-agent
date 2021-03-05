@@ -14,7 +14,7 @@ import (
 func Start() {
 	for {
 
-		// Notifies user agent is down if a panic occurs. TODO: sell all positions
+		// Notifies user agent is down if a panic occurs.
 		defer recovery.Recover()
 
 		// Initialize account and get current account information/balance
@@ -38,22 +38,20 @@ func Start() {
 		}
 
 		// Check if market is open. If closed email current equity and balance change and sleep until the market reopens.
-		// if !profile.MarketOpen {
-		// 	log.Info("Market is closed")
+		if !profile.MarketOpen {
+			log.Info("Market is closed")
 
-		// 	totalEquity, balanceChange := profile.GetEquityAndBalanceChange()
-		// 	mailer.Notify("Current equity: " + totalEquity + "\n" + "Today's change: " + balanceChange)
+			totalEquity, balanceChange := profile.GetEquityAndBalanceChange()
+			mailer.Notify("Current equity: " + totalEquity + "\n" + "Today's change: " + balanceChange)
 
-		// 	sleep := profile.NextOpen.Sub(time.Now())
-		// 	log.Info("Sleeping for ", sleep)
-		// 	time.Sleep(sleep)
+			sleep := profile.NextOpen.Sub(time.Now())
+			log.Info("Sleeping for ", sleep)
+			time.Sleep(sleep)
 
-		// 	continue
-		// }
+			continue
+		}
 
-		log.Info(profile.BuyingPower)
-
-		// do trades here
+		// Get all current positions
 		positions, err := profile.AlpacaClient.ListPositions()
 		if err != nil {
 			mailer.Notify("Couldn't list positions to error: " + err.Error())
@@ -64,7 +62,7 @@ func Start() {
 			log.Info(position)
 		}
 
-		log.Info("Sleeping for 30 seconds")
-		time.Sleep(30 * time.Second)
+		log.Info("Sleeping for 5 minutes")
+		time.Sleep(5 * time.Minute)
 	}
 }
