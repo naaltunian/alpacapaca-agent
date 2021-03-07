@@ -10,6 +10,6 @@ import (
 func recovery() {
 	if r := recover(); r != nil {
 		errStr := fmt.Sprintf("%v", r)
-		mailer.Notify("Agent panic: " + errStr)
+		mailer.Notify("PANIC", "Agent panic: "+errStr)
 	}
 }
