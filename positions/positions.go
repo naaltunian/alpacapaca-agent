@@ -4,4 +4,8 @@
 // 	log "github.com/sirupsen/logrus"
 // )
 
-// func ListPositions
+// // func SellPositions()
+
+// func CheckPosition() {
+
+// }

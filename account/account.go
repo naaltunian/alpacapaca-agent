@@ -5,15 +5,16 @@ import (
 
 	"github.com/alpacahq/alpaca-trade-api-go/alpaca"
 	"github.com/alpacahq/alpaca-trade-api-go/common"
-	"github.com/shopspring/decimal"
+	log "github.com/sirupsen/logrus"
 )
 
 type Profile struct {
-	AlpacaClient *alpaca.Client
-	Account      *alpaca.Account
-	MarketOpen   bool
-	NextOpen     time.Time
-	BuyingPower  decimal.Decimal
+	AlpacaClient  *alpaca.Client
+	Account       *alpaca.Account
+	MarketOpen    bool
+	NextOpen      time.Time
+	BuyingPower   float64
+	MarketClosing bool
 }
 
 // InitializeClient initializes the client and checks if the market is open
@@ -38,12 +39,18 @@ func InitializeClient() (*Profile, error) {
 		return nil, err
 	}
 
+	nextClose := clock.NextClose
+	isMarketClosing := checkMarketClosing(nextClose)
+
+	buyingPower, _ := acct.BuyingPower.Float64()
+
 	profile := &Profile{
-		AlpacaClient: alpacaClient,
-		Account:      acct,
-		MarketOpen:   clock.IsOpen,
-		NextOpen:     clock.NextOpen,
-		BuyingPower:  acct.BuyingPower,
+		AlpacaClient:  alpacaClient,
+		Account:       acct,
+		MarketOpen:    clock.IsOpen,
+		MarketClosing: isMarketClosing,
+		NextOpen:      clock.NextOpen,
+		BuyingPower:   buyingPower,
 	}
 
 	return profile, nil
@@ -63,3 +70,39 @@ func (p *Profile) GetEquityAndBalanceChange() (string, string) {
 
 	return equity.String(), balanceChange.String()
 }
+
+func (p *Profile) CheckPositionChange(stock string) (float32, error) {
+	barCount := 5
+	bars, err := p.AlpacaClient.GetSymbolBars(stock, alpaca.ListBarParams{
+		Timeframe: "day",
+		Limit:     &barCount,
+	})
+	log.Info(bars)
+	// asset, err := p.AlpacaClient.
+	if err != nil {
+		return 0.0, err
+	}
+	// log.Info(asset.)
+
+	return 0.0, nil
+}
+
+// checkMarketClosing returns whether the market is closing within 15 minutes.
+// Used to determine whether to sell all positions before market closes
+func checkMarketClosing(timeToClose time.Time) bool {
+	now := time.Now()
+	sellTime := timeToClose.Add(time.Duration(-15) * time.Minute)
+	log.Info("selltime", sellTime.Sub(now))
+	log.Info("selltime math", sellTime.Sub(now) <= 15*time.Minute)
+	if sellTime.Sub(now) <= 15*time.Minute {
+		return true
+	}
+	return false
+}
+
+// log.Info(clock.NextClose.Sub(10 * time.Minute))
+// sellTime := clock.NextClose.Add(time.Duration(-15) * time.Minute)
+// nextClose :=clock.NextClose
+// isMarketClosing := checkMarketClosing(nextClose)
+// timeNow := sellTime.Sub(time.Now())
+// log.Info(timeNow)

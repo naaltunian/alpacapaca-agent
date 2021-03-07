@@ -12,6 +12,7 @@ import (
 )
 
 func Start() {
+	stockToWatch := []string{"UBER", "AAPL", "TSLA"}
 	for {
 
 		// Notifies user agent is down if a panic occurs.
@@ -37,9 +38,9 @@ func Start() {
 			os.Exit(1)
 		}
 
-		// Check if market is open. If closed email current equity and balance change and sleep until the market reopens.
-		if !profile.MarketOpen {
-			log.Info("Market is closed")
+		// Check if market is closed or closing in 15 min. If closed email current equity and balance change and sleep until the market reopens.
+		if profile.MarketClosing || !profile.MarketOpen {
+			log.Info("Market is closing. Selling all open positions")
 
 			totalEquity, balanceChange := profile.GetEquityAndBalanceChange()
 			mailer.Notify("Current equity: " + totalEquity + "\n" + "Today's change: " + balanceChange)
@@ -58,8 +59,27 @@ func Start() {
 			continue
 		}
 
+		// TODO: cleanup loop
+		// loop through current positions to determine hold/sell
 		for _, position := range positions {
-			log.Info(position)
+			entryPrice := position.EntryPrice
+			log.Info(entryPrice)
+			// get current price and do math. if total profit >= 1.5% sell all unless price rose >= 0.5% over past 5 mins
+		}
+
+		// TODO: cleanup loop
+		// loop through positions to buy
+		if profile.BuyingPower >= 5000 {
+			for _, stock := range stockToWatch {
+				percentChange, err := profile.CheckPositionChange(stock)
+				if err != nil {
+					log.Error("Couldn't get balance change ", err)
+					continue
+				}
+				if percentChange >= 0.5 {
+					// buy and set sell limit stop loss -0.05%
+				}
+			}
 		}
 
 		log.Info("Sleeping for 5 minutes")
