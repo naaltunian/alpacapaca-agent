@@ -92,17 +92,9 @@ func (p *Profile) CheckPositionChange(stock string) (float32, error) {
 func checkMarketClosing(timeToClose time.Time) bool {
 	now := time.Now()
 	sellTime := timeToClose.Add(time.Duration(-15) * time.Minute)
-	log.Info("selltime", sellTime.Sub(now))
-	log.Info("selltime math", sellTime.Sub(now) <= 15*time.Minute)
+
 	if sellTime.Sub(now) <= 15*time.Minute {
 		return true
 	}
 	return false
 }
-
-// log.Info(clock.NextClose.Sub(10 * time.Minute))
-// sellTime := clock.NextClose.Add(time.Duration(-15) * time.Minute)
-// nextClose :=clock.NextClose
-// isMarketClosing := checkMarketClosing(nextClose)
-// timeNow := sellTime.Sub(time.Now())
-// log.Info(timeNow)

@@ -7,12 +7,16 @@ import (
 
 	"github.com/naaltunian/paca-agent/account"
 	"github.com/naaltunian/paca-agent/mailer"
+	"github.com/naaltunian/paca-agent/positions"
 
 	log "github.com/sirupsen/logrus"
 )
 
 func Start() {
+	// add microsoft, amazon, netflix, walmart, target, etc
 	stockToWatch := []string{"UBER", "AAPL", "TSLA"}
+	// TODO: move to db once tested. keeping track of stock changes in memory
+	memPos := make(map[string]positions.PositionTracking)
 	for {
 
 		// Notifies user agent is down if a panic occurs.
@@ -62,15 +66,23 @@ func Start() {
 		// TODO: cleanup loop
 		// loop through current positions to determine hold/sell
 		for _, position := range positions {
-			entryPrice := position.EntryPrice
-			log.Info(entryPrice)
+			log.Info("Starting hold/sell run")
+			name := position.Symbol
+			currentPrice, _ := position.CurrentPrice.Float64()
+			pos := memPos[name]
+			pos.UpdatePosition(currentPrice)
 			// get current price and do math. if total profit >= 1.5% sell all unless price rose >= 0.5% over past 5 mins
 		}
 
-		// TODO: cleanup loop
+		// TODO: cleanup loop. If holding position don't buy more
 		// loop through positions to buy
 		if profile.BuyingPower >= 5000 {
 			for _, stock := range stockToWatch {
+				// if holding stock continue. Don't buy more
+				if _, found := memPos[stock]; found {
+					log.Info("Holding stock. Continuing...")
+					continue
+				}
 				percentChange, err := profile.CheckPositionChange(stock)
 				if err != nil {
 					log.Error("Couldn't get balance change ", err)
