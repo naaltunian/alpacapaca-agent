@@ -24,12 +24,12 @@ func init() {
 }
 
 // Notify emails agent owners of any issues
-func Notify(msg string) {
+func Notify(subject, msg string) {
 	// for reference: https://www.loginradius.com/blog/async/sending-emails-with-golang/
 
 	// Message
 	message := []byte("To: test@test.com\r\n" +
-		"Subject: Urgent Trading Notification!\r\n" +
+		"Subject: " + subject + "\r\n" +
 		"\r\n" +
 		msg,
 	)

@@ -23,7 +23,7 @@ func Start() {
 		if err != nil {
 			log.Error("Error initializing client: ", err)
 			// email notifying agent is down
-			mailer.Notify("Could not initialize client: " + err.Error())
+			mailer.Notify("Error", "Could not initialize client: "+err.Error())
 
 			os.Exit(1)
 		}
@@ -33,7 +33,7 @@ func Start() {
 		if acct.TradingBlocked || acct.AccountBlocked {
 			log.Error("Account is blocked")
 			// email notifying agent is down.
-			mailer.Notify("Account is blocked. Trading Blocked: " + strconv.FormatBool(acct.TradingBlocked) + " Account Blocked: " + strconv.FormatBool(acct.AccountBlocked))
+			mailer.Notify("Error", "Account is blocked. Trading Blocked: "+strconv.FormatBool(acct.TradingBlocked)+" Account Blocked: "+strconv.FormatBool(acct.AccountBlocked))
 
 			os.Exit(1)
 		}
@@ -43,7 +43,7 @@ func Start() {
 			log.Info("Market is closing. Selling all open positions")
 
 			totalEquity, balanceChange := profile.GetEquityAndBalanceChange()
-			mailer.Notify("Current equity: " + totalEquity + "\n" + "Today's change: " + balanceChange)
+			mailer.Notify("Days End", "Current equity: "+totalEquity+"\n"+"Today's change: "+balanceChange)
 
 			sleep := profile.NextOpen.Sub(time.Now())
 			log.Info("Sleeping for ", sleep)
@@ -55,7 +55,7 @@ func Start() {
 		// Get all current positions
 		positions, err := profile.AlpacaClient.ListPositions()
 		if err != nil {
-			mailer.Notify("Couldn't list positions to error: " + err.Error())
+			mailer.Notify("Error", "Couldn't list positions to error: "+err.Error())
 			continue
 		}
 
