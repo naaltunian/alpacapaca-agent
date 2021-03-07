@@ -80,7 +80,7 @@ func Start() {
 			for _, stock := range stockToWatch {
 				// if holding stock continue. Don't buy more
 				if _, found := memPos[stock]; found {
-					log.Info("Holding stock. Continuing...")
+					log.Info("Holding stock ", stock+". Continuing")
 					continue
 				}
 				percentChange, err := profile.CheckPositionChange(stock)
