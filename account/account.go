@@ -5,6 +5,7 @@ import (
 
 	"github.com/alpacahq/alpaca-trade-api-go/alpaca"
 	"github.com/alpacahq/alpaca-trade-api-go/common"
+	"github.com/alpacahq/alpaca-trade-api-go/v2/stream"
 	log "github.com/sirupsen/logrus"
 )
 
@@ -72,12 +73,13 @@ func (p *Profile) GetEquityAndBalanceChange() (string, string) {
 }
 
 func (p *Profile) CheckPositionChange(stock string) (float32, error) {
+
 	barCount := 5
 	bars, err := p.AlpacaClient.GetSymbolBars(stock, alpaca.ListBarParams{
 		Timeframe: "day",
 		Limit:     &barCount,
 	})
-	log.Info(bars)
+	log.Info(bars[0])
 	// asset, err := p.AlpacaClient.
 	if err != nil {
 		return 0.0, err
@@ -97,4 +99,10 @@ func checkMarketClosing(timeToClose time.Time) bool {
 		return true
 	}
 	return false
+}
+
+func TradeHandler(trade stream.Trade) {
+	log.Info("here")
+	log.Info("trade", trade.Price)
+	// return trade.Price
 }

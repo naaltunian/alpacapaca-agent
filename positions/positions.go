@@ -2,25 +2,32 @@ package positions
 
 type PositionTracking struct {
 	Name                 string  // don't update
+	Owned                bool    // owned
 	CurrentPercentChange float64 // update when checking price
 	OverallPercentChange float64 // update when checking price
 	PriceBought          float64 // don't update
 	LastPrice            float64 // update current price to lastPrice for future loop iterations
-	CurrentPrice         float64 // delete?
+	// CurrentPrice         float64 // delete?
 }
 
 // UpdatePosition updates the position with current information used for tracking buy/sell/hold
 func (p *PositionTracking) UpdatePosition(currentPrice float64) {
+	var overallPercentchange float64
 	lastPrice := p.LastPrice
 	entryPrice := p.PriceBought
 
-	currentPercentChange := getPositionPercentChange(currentPrice, lastPrice)
-	overallPercentchange := getPositionPercentChange(entryPrice, lastPrice)
+	// to account for market opening
+	if lastPrice == 0 {
+		lastPrice = currentPrice
+	}
 
+	currentPercentChange := getPositionPercentChange(currentPrice, lastPrice)
+	if p.Owned {
+		overallPercentchange = getPositionPercentChange(entryPrice, lastPrice)
+	}
 	p.LastPrice = currentPrice // set last price to current price for the next loop iteration
 	p.CurrentPercentChange = currentPercentChange
 	p.OverallPercentChange = overallPercentchange
-
 }
 
 // getPositionPercentChange tracks the percent change between each loop
