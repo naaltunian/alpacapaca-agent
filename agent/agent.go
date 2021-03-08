@@ -46,18 +46,18 @@ func Start() {
 		}
 
 		// Check if market is closed or closing in 15 min. If closed email current equity and balance change and sleep until the market reopens.
-		// if profile.MarketClosing || !profile.MarketOpen {
-		// 	log.Info("Market is closing. Selling all open positions")
+		if profile.MarketClosing || !profile.MarketOpen {
+			log.Info("Market is closing. Selling all open positions")
 
-		// 	totalEquity, balanceChange := profile.GetEquityAndBalanceChange()
-		// 	mailer.Notify("Days End", "Current equity: "+totalEquity+"\n"+"Today's change: "+balanceChange)
+			totalEquity, balanceChange := profile.GetEquityAndBalanceChange()
+			mailer.Notify("Days End", "Current equity: "+totalEquity+"\n"+"Today's change: "+balanceChange)
 
-		// 	sleep := profile.NextOpen.Sub(time.Now())
-		// 	log.Info("Sleeping for ", sleep)
-		// 	time.Sleep(sleep)
+			sleep := profile.NextOpen.Sub(time.Now())
+			log.Info("Sleeping for ", sleep)
+			time.Sleep(sleep)
 
-		// 	continue
-		// }
+			continue
+		}
 
 		// Get all current positions
 		positions, err := profile.AlpacaClient.ListPositions()
@@ -79,14 +79,14 @@ func Start() {
 
 			// get current price and do math. if total profit >= 1.5% sell all unless price rose >= 0.5% over past 5 mins
 			if memPos[position.Symbol].CurrentPercentChange <= 0.30 {
-				log.Info("SELL THIS POSITION")
+				log.Info("SELL THIS POSITION STOP LOSSES ", position.Symbol)
 				err := profile.AlpacaClient.ClosePosition(name)
 				if err != nil {
 					log.Error("Could not sell position ", err)
 					continue
 				}
 			} else if memPos[position.Symbol].OverallPercentChange >= 1.5 {
-				log.Info("SELL THIS POSITION")
+				log.Info("SELL THIS POSITION MAKE PROFIT ", position.Symbol)
 				err := profile.AlpacaClient.ClosePosition(name)
 				if err != nil {
 					log.Error("Could not sell position ", err)
@@ -140,7 +140,8 @@ func Start() {
 				// }
 				if memPos[stock].CurrentPercentChange >= 0.2 {
 					// buy and set sell limit stop loss -0.05%
-					log.Info("BUYING", stock)
+					log.Info("BUYING ", stock)
+					profile.PlaceOrder(stock, float64(quotes.Last.Price))
 				}
 			}
 		}
@@ -148,8 +149,10 @@ func Start() {
 		log.Infof("%+v", memPos["AAPL"])
 		log.Infof("%+v", memPos["TSLA"])
 		log.Infof("%+v", memPos["UBER"])
+		log.Info("BUYING POWER ", profile.BuyingPower)
 
 		log.Info("Sleeping for 5 minutes")
+		log.Info("--------------------------------------------------------")
 		time.Sleep(5 * time.Minute)
 	}
 }

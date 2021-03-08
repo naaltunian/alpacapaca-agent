@@ -1,11 +1,13 @@
 package account
 
 import (
+	"math"
 	"time"
 
 	"github.com/alpacahq/alpaca-trade-api-go/alpaca"
 	"github.com/alpacahq/alpaca-trade-api-go/common"
 	"github.com/alpacahq/alpaca-trade-api-go/v2/stream"
+	"github.com/shopspring/decimal"
 	log "github.com/sirupsen/logrus"
 )
 
@@ -106,3 +108,40 @@ func TradeHandler(trade stream.Trade) {
 	log.Info("trade", trade.Price)
 	// return trade.Price
 }
+
+func (a *Profile) PlaceOrder(symbol string, currentPrice float64) error {
+	acct := a.AlpacaClient
+	// buyingPower := a.BuyingPower
+
+	qtyToBuy := math.Floor(700 / currentPrice)
+	newBuyingPower := currentPrice * qtyToBuy
+	log.Info(qtyToBuy)
+
+	order, err := acct.PlaceOrder(alpaca.PlaceOrderRequest{
+		AssetKey:    &symbol,
+		Qty:         decimal.NewFromFloat(qtyToBuy),
+		Type:        alpaca.Market,
+		TimeInForce: alpaca.IOC,
+	})
+	if err != nil {
+		log.Error(err)
+		return err
+	}
+	stopLossPercent := 0.5
+	stopLossDecimal := decimal.NewFromFloat(stopLossPercent)
+	// update buying power: will be approximated (depends on position buy in but this rough estimate will work until loop runs again and buying power is refreshed)
+	a.BuyingPower = newBuyingPower
+	// set sell limit here
+	_, err = alpaca.PlaceOrder(alpaca.PlaceOrderRequest{
+		AssetKey:     &symbol,
+		Qty:          order.Qty,
+		Side:         alpaca.Sell,
+		Type:         alpaca.TrailingStop,
+		TrailPercent: &stopLossDecimal,
+		TimeInForce:  alpaca.Day,
+	})
+
+	return nil
+}
+
+// func setSellLimit()
