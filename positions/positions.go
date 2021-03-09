@@ -7,6 +7,7 @@ type PositionTracking struct {
 	OverallPercentChange float64 // update when checking price
 	PriceBought          float64 // don't update
 	LastPrice            float64 // update current price to lastPrice for future loop iterations
+	StopLossOrderId      string
 	// CurrentPrice         float64 // delete?
 }
 
