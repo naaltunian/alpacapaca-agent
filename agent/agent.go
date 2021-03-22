@@ -15,7 +15,7 @@ import (
 
 func Start() {
 	// add microsoft, amazon, netflix, walmart, target, etc
-	stockToWatch := []string{"UBER", "AAPL", "TSLA", "INTC", "NVDA", "TGT", "WMT"}
+	stockToWatch := []string{"UBER", "AAPL", "TSLA"}
 	// TODO: move to db once tested. keeping track of stock changes in memory
 	memPos := make(map[string]*positions.PositionTracking)
 	memPos["UBER"] = &positions.PositionTracking{Name: "UBER", Owned: false}
@@ -86,24 +86,26 @@ func Start() {
 			pos.Owned = false
 		}
 
+		log.Info("before looping through positions")
+
 		// TODO: cleanup loop
 		// loop through current positions to determine hold/sell
 		for _, position := range positions {
 			memPos[position.Symbol].Owned = true
 			name := position.Symbol
-			qty := position.Qty
+			// qty := position.Qty
 			currentPrice, _ := position.CurrentPrice.Float64()
-			entryPrice, _ := position.EntryPrice.Float64()
-			stopLossId := memPos[position.Symbol].StopLossOrderId
+			// entryPrice, _ := position.EntryPrice.Float64()
+			// stopLossId := memPos[position.Symbol].StopLossOrderId
 
-			if currentPrice > entryPrice {
-				stopLossId, err := account.SetNewStopTrailingPrice(name, qty, stopLossId)
-				if err != nil {
-					log.Error("error setting trailingprice ", err)
-					continue
-				}
-				memPos[position.Symbol].StopLossOrderId = stopLossId
-			}
+			// if currentPrice > entryPrice {
+			// 	stopLossId, err := account.SetNewStopTrailingPrice(name, qty, stopLossId)
+			// 	if err != nil {
+			// 		log.Error("error setting trailingprice ", err)
+			// 		continue
+			// 	}
+			// 	memPos[position.Symbol].StopLossOrderId = stopLossId
+			// }
 
 			memPos[position.Symbol].UpdatePosition(currentPrice)
 			// delete below most likely
@@ -126,6 +128,8 @@ func Start() {
 			}
 		}
 
+		log.Info("before looping through stock to buy")
+
 		// TODO: cleanup loop. If holding position don't buy more
 		// loop through positions to buy
 		if profile.BuyingPower >= 5000 {
@@ -144,8 +148,11 @@ func Start() {
 					continue
 				}
 
+				log.Info("after getting last trade")
+
 				memPos[stock].UpdatePosition(float64(quotes.Last.Price))
 
+				log.Info("before placing order")
 				if memPos[stock].CurrentPercentChange >= 0.2 {
 					// buy and set sell limit stop loss -0.05%
 					log.Info("BUYING ", stock)
@@ -173,6 +180,8 @@ func Start() {
 				}
 			}
 		}
+
+		log.Info("after buy loop")
 
 		log.Infof("%+v", memPos["AAPL"])
 		log.Infof("%+v", memPos["TSLA"])

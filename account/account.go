@@ -108,11 +108,15 @@ func checkMarketClosing(timeToClose time.Time) bool {
 // 	// return trade.Price
 // }
 
+// PlaceOrder
 func (a *Profile) PlaceOrder(symbol string, currentPrice float64) error {
 	acct := a.AlpacaClient
 	// buyingPower := a.BuyingPower
 
 	qtyToBuy := math.Floor(700 / currentPrice)
+	if qtyToBuy <= 0 {
+		qtyToBuy = 1
+	}
 	newBuyingPower := currentPrice * qtyToBuy
 	log.Info("BUYING ", symbol, " ", qtyToBuy)
 	// asset := symbol
@@ -157,18 +161,19 @@ func (a *Profile) PlaceOrder(symbol string, currentPrice float64) error {
 }
 
 func SetNewStopTrailingPrice(name string, qty decimal.Decimal, stopLossId string) (string, error) {
-	stopLossPercent := 0.5
+	stopLossPercent := 0.2
 	stopLossDecimal := decimal.NewFromFloat(stopLossPercent)
 
+	// cancel old stop order if it exists
 	if stopLossId != "" {
 		err := alpaca.CancelOrder(stopLossId)
 		if err != nil {
 			log.Error("Couldn't cancel stop loss order with err: ", err)
 			return "", err
 		}
+		// allows for the previous order to be cancelled before submitting another one
+		time.Sleep(3 * time.Second)
 	}
-
-	time.Sleep(3 * time.Second)
 
 	order, err := alpaca.PlaceOrder(alpaca.PlaceOrderRequest{
 		AssetKey:     &name,
@@ -182,8 +187,9 @@ func SetNewStopTrailingPrice(name string, qty decimal.Decimal, stopLossId string
 		log.Error("Error setting trailing stop ", err)
 		return "", err
 	}
-
-	newStopLossId := order.ClientOrderID
+	// order.
+	// newStopLossId := order.ClientOrderID
+	newStopLossId := order.ID
 
 	return newStopLossId, nil
 }
