@@ -1,10 +1,12 @@
 package account
 
 import (
+	"math"
 	"time"
 
 	"github.com/alpacahq/alpaca-trade-api-go/alpaca"
 	"github.com/alpacahq/alpaca-trade-api-go/common"
+	"github.com/shopspring/decimal"
 	log "github.com/sirupsen/logrus"
 )
 
@@ -72,12 +74,13 @@ func (p *Profile) GetEquityAndBalanceChange() (string, string) {
 }
 
 func (p *Profile) CheckPositionChange(stock string) (float32, error) {
+
 	barCount := 5
 	bars, err := p.AlpacaClient.GetSymbolBars(stock, alpaca.ListBarParams{
 		Timeframe: "day",
 		Limit:     &barCount,
 	})
-	log.Info(bars)
+	log.Info(bars[0])
 	// asset, err := p.AlpacaClient.
 	if err != nil {
 		return 0.0, err
@@ -92,17 +95,103 @@ func (p *Profile) CheckPositionChange(stock string) (float32, error) {
 func checkMarketClosing(timeToClose time.Time) bool {
 	now := time.Now()
 	sellTime := timeToClose.Add(time.Duration(-15) * time.Minute)
-	log.Info("selltime", sellTime.Sub(now))
-	log.Info("selltime math", sellTime.Sub(now) <= 15*time.Minute)
+
 	if sellTime.Sub(now) <= 15*time.Minute {
 		return true
 	}
 	return false
 }
 
-// log.Info(clock.NextClose.Sub(10 * time.Minute))
-// sellTime := clock.NextClose.Add(time.Duration(-15) * time.Minute)
-// nextClose :=clock.NextClose
-// isMarketClosing := checkMarketClosing(nextClose)
-// timeNow := sellTime.Sub(time.Now())
-// log.Info(timeNow)
+// func TradeHandler(trade stream.Trade) {
+// 	log.Info("here")
+// 	log.Info("trade", trade.Price)
+// 	// return trade.Price
+// }
+
+// PlaceOrder
+func (a *Profile) PlaceOrder(symbol string, currentPrice float64) error {
+	acct := a.AlpacaClient
+	// buyingPower := a.BuyingPower
+
+	qtyToBuy := math.Floor(700 / currentPrice)
+	if qtyToBuy <= 0 {
+		qtyToBuy = 1
+	}
+	newBuyingPower := currentPrice * qtyToBuy
+	log.Info("BUYING ", symbol, " ", qtyToBuy)
+	// asset := symbol
+	// log.Info(decimal.NewFromFloat(qtyToBuy))
+
+	_, err := acct.PlaceOrder(alpaca.PlaceOrderRequest{
+		AssetKey:    &symbol,
+		Qty:         decimal.NewFromFloat(qtyToBuy),
+		Type:        alpaca.Market,
+		Side:        alpaca.Buy,
+		TimeInForce: alpaca.IOC,
+	})
+	if err != nil {
+		log.Error("Error buying ", &symbol)
+		log.Error("ERROR: ", err)
+		return err
+	}
+
+	a.BuyingPower = newBuyingPower
+	// order.FilledQty
+	return nil
+	// to let the order go through. otherwise it happens too fast and the TrailingStop fails
+	// time.Sleep(3 * time.Second)
+
+	// stopLossPercent := 0.5
+	// stopLossDecimal := decimal.NewFromFloat(stopLossPercent)
+	// update buying power: will be approximated (depends on position buy in but this rough estimate will work until loop runs again and buying power is refreshed)
+	// set sell limit here
+	// _, err = alpaca.PlaceOrder(alpaca.PlaceOrderRequest{
+	// 	AssetKey:     &symbol,
+	// 	Qty:          order.Qty,
+	// 	Side:         alpaca.Sell,
+	// 	Type:         alpaca.TrailingStop,
+	// 	TrailPercent: &stopLossDecimal,
+	// 	TimeInForce:  alpaca.Day,
+	// })
+	// if err != nil {
+	// 	log.Error("Error setting trailing stop ", err)
+	// }
+
+	// return nil
+}
+
+func SetNewStopTrailingPrice(name string, qty decimal.Decimal, stopLossId string) (string, error) {
+	stopLossPercent := 0.2
+	stopLossDecimal := decimal.NewFromFloat(stopLossPercent)
+
+	// cancel old stop order if it exists
+	if stopLossId != "" {
+		err := alpaca.CancelOrder(stopLossId)
+		if err != nil {
+			log.Error("Couldn't cancel stop loss order with err: ", err)
+			return "", err
+		}
+		// allows for the previous order to be cancelled before submitting another one
+		time.Sleep(3 * time.Second)
+	}
+
+	order, err := alpaca.PlaceOrder(alpaca.PlaceOrderRequest{
+		AssetKey:     &name,
+		Qty:          qty,
+		Side:         alpaca.Sell,
+		Type:         alpaca.TrailingStop,
+		TrailPercent: &stopLossDecimal,
+		TimeInForce:  alpaca.Day,
+	})
+	if err != nil {
+		log.Error("Error setting trailing stop ", err)
+		return "", err
+	}
+	// order.
+	// newStopLossId := order.ClientOrderID
+	newStopLossId := order.ID
+
+	return newStopLossId, nil
+}
+
+// func setSellLimit()
